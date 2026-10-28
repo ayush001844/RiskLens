@@ -1,0 +1,35 @@
+# Python & Virtual Environments
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Databases & test files
+backend/test_*.db
+backend/app/test_*.db
+test_debug.db
+test_risklens.db
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & IDE
+.env
+.env.local
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.vercel
