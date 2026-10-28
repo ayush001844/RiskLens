@@ -39,8 +39,16 @@ app.include_router(remediation.router, prefix="/api")
 app.include_router(vendors.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 
+# Also include directly so /dashboard, /risks, etc. work if /api prefix is stripped by serverless wrapper
+app.include_router(risks.router)
+app.include_router(controls.router)
+app.include_router(remediation.router)
+app.include_router(vendors.router)
+app.include_router(reports.router)
+
 
 @app.get("/api/health")
+@app.get("/health")
 def health():
     return {"status": "ok", "app": "RiskLens", "data": "SYNTHETIC/DEMO"}
 
