@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   FileText,
   Printer,
@@ -10,20 +11,37 @@ import {
   ArrowRight,
   AlertTriangle,
   FileSpreadsheet,
+  Archive,
+  FolderArchive,
+  Scale,
+  FileCheck,
+  Hash,
+  Eye,
+  Sparkles,
+  CheckCircle2,
+  Lock,
 } from 'lucide-react'
-import { getFullReport, downloadCsv } from '../api/client'
+import { getFullReport, downloadCsv, dossierApi, reportsApi } from '../api/client'
+import type { DossierSummaryResponse } from '../types'
 import { getBadgeClass } from '../utils'
 
 export const ReportsView: React.FC = () => {
   const [report, setReport] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [dossierSummary, setDossierSummary] = useState<DossierSummaryResponse | null>(null)
+  const [manifestModalOpen, setManifestModalOpen] = useState(false)
 
   useEffect(() => {
     getFullReport()
       .then((data) => setReport(data))
       .catch((err) => console.error('Error fetching full report:', err))
       .finally(() => setLoading(false))
+
+    dossierApi.getSummary()
+      .then((data) => setDossierSummary(data))
+      .catch((err) => console.error('Error fetching dossier summary:', err))
   }, [])
+
 
   if (loading || !report) {
     return (
@@ -93,17 +111,256 @@ export const ReportsView: React.FC = () => {
           </div>
 
           <button
+            onClick={() => window.open('/api/reports/excel', '_blank')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all"
+            title="Download multi-sheet Excel workbook (.xlsx)"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export Excel (.xlsx)</span>
+          </button>
+
+          <button
+            onClick={() => window.open('/api/reports/pdf', '_blank')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow-md shadow-red-600/20 transition-all"
+            title="Download compiled executive PDF deliverable (.pdf)"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export PDF (.pdf)</span>
+          </button>
+
+          <button
             onClick={() => window.print()}
             className="btn btn-primary text-xs shadow-lg shadow-blue-500/20"
           >
             <Printer className="w-4 h-4" />
-            <span>Print / Save PDF</span>
+            <span>Print View</span>
           </button>
         </div>
       </div>
 
+      {/* Phase 15: Regulatory Audit Dossiers & Verified Evidence Binders (Hidden in Print) */}
+      <div className="print:hidden card p-5 bg-slate-900/90 border-slate-700/80 space-y-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <FolderArchive className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-base font-bold text-white">
+                Regulatory Audit Dossiers & Verified Evidence Packages
+              </h3>
+              <span className="badge badge-info text-[10px] font-mono flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-cyan-400" />
+                SHA-256 Non-Repudiation
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              One-click generation of digitally certified regulatory audit packages with official transmittal memo, controls worksheets, crosswalk matrix, and evidence chain of custody.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setManifestModalOpen(true)}
+            className="btn btn-secondary text-xs flex items-center gap-1.5 shrink-0"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Inspect Package Manifest
+          </button>
+        </div>
+
+        {/* 4 Quick Dossier Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Bundle 1: ALL */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-indigo-500/30 flex flex-col justify-between hover:border-indigo-500/60 transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">
+                  ALL 5 REGULATORS
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">7 Files • ~120 KB</span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-100">Full Comprehensive GRC Dossier</h4>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Universal regulatory filing covering NIST CSF 2.0, ISO 27001, RBI, DPDP Act 2023 & PCI DSS 4.0.1.
+              </p>
+            </div>
+            <button
+              onClick={() => window.open(reportsApi.dossierDownloadUrl('ALL'), '_blank')}
+              className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download Dossier (.zip)
+            </button>
+          </div>
+
+          {/* Bundle 2: RBI */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-500/60 transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                  RBI CIRCULAR 418
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">7 Files • ~115 KB</span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-100">RBI IT Supervisory Package</h4>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Formal evidence binder for RBI Annual Supervisory Examination covering core banking MFA and SIEM logs.
+              </p>
+            </div>
+            <button
+              onClick={() => window.open(reportsApi.dossierDownloadUrl('RBI'), '_blank')}
+              className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download RBI (.zip)
+            </button>
+          </div>
+
+          {/* Bundle 3: DPBI */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-amber-500/30 flex flex-col justify-between hover:border-amber-500/60 transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                  DPDP ACT SEC 8(5)
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">7 Files • ~110 KB</span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-100">DPDP Act Safeguards Dossier</h4>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Statutory evidence demonstrating personal data encryption and vendor processor safeguards (§33 protection).
+              </p>
+            </div>
+            <button
+              onClick={() => window.open(reportsApi.dossierDownloadUrl('DPBI'), '_blank')}
+              className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-md shadow-amber-600/20 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download DPDP (.zip)
+            </button>
+          </div>
+
+          {/* Bundle 4: PCI_SSC */}
+          <div className="p-4 rounded-xl bg-slate-950/70 border border-purple-500/30 flex flex-col justify-between hover:border-purple-500/60 transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold">
+                  PCI DSS v4.0.1
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">7 Files • ~110 KB</span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-100">PCI-DSS SAQ-D Attestation</h4>
+              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
+                Cardholder Data Environment (CDE) evidence binder for QSA on-site review & merchant acquiring defense.
+              </p>
+            </div>
+            <button
+              onClick={() => window.open(reportsApi.dossierDownloadUrl('PCI_SSC'), '_blank')}
+              className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md shadow-purple-600/20 transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Download PCI (.zip)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Manifest & Hashes Inspection Modal */}
+      {manifestModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in">
+          <div className="card w-full max-w-2xl border-slate-700 bg-slate-900 shadow-2xl p-6 relative">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <FolderArchive className="w-5 h-5 text-indigo-400" />
+                <div>
+                  <h3 className="text-base font-semibold text-slate-100">Regulatory Dossier Manifest & SHA-256 Hashes</h3>
+                  <p className="text-xs text-slate-400">Cryptographically sealed audit evidence package • DOS-2026-APEX-001</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setManifestModalOpen(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {/* Signatories & Notice */}
+              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                <div>
+                  <span className="text-slate-500 font-mono text-[10px] uppercase">Entity Signatory:</span>
+                  <p className="font-semibold text-slate-200">Vikram Malhotra</p>
+                  <p className="text-slate-400 text-[11px]">Chief Information Security Officer, Apex Financial Services</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 font-mono text-[10px] uppercase">Independent Lead Auditor:</span>
+                  <p className="font-semibold text-slate-200">Dr. Ananya Roy, Ph.D, CISA, CISSP</p>
+                  <p className="text-slate-400 text-[11px]">Lead Cybersecurity Assessor, RiskLens Advisory</p>
+                </div>
+              </div>
+
+              {/* File Table */}
+              <div className="overflow-x-auto rounded-lg border border-slate-800">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 bg-slate-950/80">
+                      <th className="table-header py-2 text-left">Artifact Name</th>
+                      <th className="table-header py-2 text-left w-20">Format</th>
+                      <th className="table-header py-2 text-left">Audit Contents & Integrity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dossierSummary?.dossier_contents.map(file => (
+                      <tr key={file.filename} className="border-b border-slate-800/60 hover:bg-slate-800/40">
+                        <td className="table-cell py-2.5 font-mono text-cyan-400 font-medium">
+                          {file.filename}
+                        </td>
+                        <td className="table-cell py-2.5">
+                          <span className="badge badge-neutral text-[10px] font-mono uppercase">{file.type}</span>
+                        </td>
+                        <td className="table-cell py-2.5 text-slate-300">
+                          <div>{file.description}</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">Verified SHA-256 Non-Repudiation Checksum</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-between border-t border-slate-800">
+                <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>NIST FIPS 180-4 SHA-256 sealed ZIP archive</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setManifestModalOpen(false)}
+                    className="btn btn-secondary text-xs"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.open(reportsApi.dossierDownloadUrl('ALL'), '_blank')
+                      setManifestModalOpen(false)
+                    }}
+                    className="btn btn-primary text-xs flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download Full Dossier (.zip)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+
       {/* Printable Consulting Document Container */}
       <div className="card p-8 sm:p-12 bg-navy-900/90 border-slate-700/80 shadow-2xl max-w-5xl mx-auto space-y-10 print:bg-white print:text-black print:border-none print:shadow-none print:p-0">
+
         {/* Cover / Title Header */}
         <div className="border-b border-slate-700/80 pb-8 print:border-black">
           <div className="flex items-center justify-between gap-4 mb-4">

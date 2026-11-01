@@ -58,7 +58,9 @@ def calculate_residual_risk(inherent_score: int, control_effectiveness_pct: int)
         control_effectiveness_pct: Consultant-assessed reduction (0–100 %)
 
     Returns:
-        Residual risk as float, rounded to 2 decimal places.
+        Residual risk as float, minimum 1.0, rounded to 2 decimal places.
+        A score of 0 is methodologically invalid — complete risk elimination
+        is not achievable. Minimum residual is therefore capped at 1.0.
 
     Raises:
         ValueError: if control_effectiveness_pct is outside [0, 100]
@@ -68,7 +70,9 @@ def calculate_residual_risk(inherent_score: int, control_effectiveness_pct: int)
             f"control_effectiveness_pct must be 0–100, got {control_effectiveness_pct}"
         )
     reduction = control_effectiveness_pct / 100.0
-    return round(inherent_score * (1 - reduction), 2)
+    raw = inherent_score * (1 - reduction)
+    # Minimum residual score is 1.0 — risk cannot be fully eliminated
+    return round(max(raw, 1.0), 2)
 
 
 def get_score_band(score: float) -> ScoreBand:
@@ -147,3 +151,51 @@ BAND_COLORS = {
     "High": "#f97316",      # orange-500
     "Critical": "#ef4444",  # red-500
 }
+
+
+def calculate_target_risk(
+    target_likelihood: int | None,
+    target_impact: int | None,
+    inherent_score: int | None = None,
+) -> float | None:
+    """
+    Compute target risk score (desired state after planned treatment).
+
+    If target_likelihood and target_impact are provided, computes likelihood × impact.
+    Returns None if either target value is not provided.
+    """
+    if target_likelihood is None or target_impact is None:
+        return None
+    if not (1 <= target_likelihood <= 5):
+        raise ValueError(f"target_likelihood must be 1–5, got {target_likelihood}")
+    if not (1 <= target_impact <= 5):
+        raise ValueError(f"target_impact must be 1–5, got {target_impact}")
+    return float(target_likelihood * target_impact)
+
+
+def check_appetite_violation(
+    residual_score: float,
+    max_acceptable_residual: int = 9,
+) -> bool:
+    """
+    Return True if the residual risk score exceeds the configured risk appetite.
+
+    Args:
+        residual_score:          The computed residual risk score
+        max_acceptable_residual: The maximum residual risk the org is willing to accept
+                                 (from RiskAppetiteConfig, default band boundary = 9)
+
+    Returns:
+        True if residual_score > max_acceptable_residual
+    """
+    return residual_score > max_acceptable_residual
+
+
+# 5×5 Risk Matrix — cell colour lookup (row=likelihood 1-5, col=impact 1-5)
+# Returns the score band for each cell
+RISK_MATRIX: dict[tuple[int, int], ScoreBand] = {
+    (likelihood, impact): get_score_band(likelihood * impact)
+    for likelihood in range(1, 6)
+    for impact in range(1, 6)
+}
+

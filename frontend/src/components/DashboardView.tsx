@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   ShieldAlert,
   AlertTriangle,
@@ -10,6 +10,8 @@ import {
   ArrowRight,
   ShieldCheck,
   FileSpreadsheet,
+  Sparkles,
+  Presentation,
 } from 'lucide-react'
 import {
   BarChart,
@@ -27,6 +29,8 @@ import {
 import type { DashboardStats, Risk, Control, RemediationItem } from '../types'
 import { HeatMap } from './HeatMap'
 import { BAND_COLORS } from '../utils'
+import { AdvisorModal } from './AdvisorModal'
+import { BoardroomPresentationModal } from './BoardroomPresentationModal'
 
 interface DashboardViewProps {
   stats: DashboardStats | null
@@ -84,6 +88,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     'Not Tested': '#64748b',
   }
 
+  const [advisorOpen, setAdvisorOpen] = useState(false)
+  const [boardroomOpen, setBoardroomOpen] = useState(false)
+
   return (
     <div className="space-y-6 pb-12 animate-in">
       {/* Executive Welcome & Overview Header */}
@@ -108,6 +115,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-3">
             <button
+              onClick={() => setBoardroomOpen(true)}
+              className="btn bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25 flex items-center gap-2 border border-purple-400/30"
+              title="Launch Full-Screen CISO / Board of Directors Presentation Mode"
+            >
+              <Presentation className="w-4 h-4" />
+              <span>Boardroom Presentation</span>
+            </button>
+            <button
+              onClick={() => setAdvisorOpen(true)}
+              className="btn bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-lg shadow-blue-500/25 flex items-center gap-2 border border-blue-400/30"
+              title="Open Automated AI Risk Advisor"
+            >
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              <span>AI Risk Advisor</span>
+            </button>
+            <button
               onClick={() => onNavigate('reports')}
               className="btn btn-primary shadow-lg shadow-blue-500/20"
             >
@@ -123,6 +146,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* AI Advisor Modal */}
+      <AdvisorModal isOpen={advisorOpen} onClose={() => setAdvisorOpen(false)} />
+
+      {/* Boardroom Presentation Modal */}
+      <BoardroomPresentationModal
+        isOpen={boardroomOpen}
+        onClose={() => setBoardroomOpen(false)}
+        stats={stats}
+        risks={risks}
+        controls={controls}
+        remediation={remediation}
+      />
 
       {/* KPI Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import { Banner } from './components/Banner'
-import { Navbar, TabType } from './components/Navbar'
-import { DashboardView } from './components/DashboardView'
-import { RiskRegisterView } from './components/RiskRegisterView'
-import { ControlAssessmentView } from './components/ControlAssessmentView'
-import { RemediationTrackerView } from './components/RemediationTrackerView'
-import { VendorRiskView } from './components/VendorRiskView'
-import { ReportsView } from './components/ReportsView'
+import { useState, useEffect } from 'react';
+import { Banner } from './components/Banner';
+import { Navbar, TabType } from './components/Navbar';
+import { DashboardView } from './components/DashboardView';
+import { RiskRegisterView } from './components/RiskRegisterView';
+import { ControlAssessmentView } from './components/ControlAssessmentView';
+import { MaturityView } from './components/MaturityView';
+import { ComplianceView } from './components/ComplianceView';
+import { ThreatsView } from './components/ThreatsView';
+import { RemediationTrackerView } from './components/RemediationTrackerView';
+import { VendorRiskView } from './components/VendorRiskView';
+import { AuditLogView } from './components/AuditLogView';
+import { ReportsView } from './components/ReportsView';
+import { SimulationPlaygroundView } from './components/SimulationPlaygroundView';
+import { ContinuousControlMonitoringView } from './components/ContinuousControlMonitoringView';
+import { CisoCopilotDrawer } from './components/CisoCopilotDrawer';
 
 import {
   getDashboard,
@@ -21,99 +28,133 @@ import {
   getVendors,
   updateVendor,
   reseedDatabase,
-} from './api/client'
-import type { Risk, Control, RemediationItem, Vendor, DashboardStats } from './types'
+  authApi,
+  setAccessToken,
+} from './api/client';
+import type { Risk, Control, RemediationItem, Vendor, DashboardStats } from './types';
+
+// Map UI roles to seeded accounts
+const DEMO_CREDENTIALS: Record<string, { u: string; p: string }> = {
+  Administrator: { u: 'admin', p: 'RiskLens@Admin1' },
+  Consultant: { u: 'consultant', p: 'RiskLens@Consult1' },
+  Auditor: { u: 'auditor', p: 'RiskLens@Audit1' },
+  Executive: { u: 'executive', p: 'RiskLens@Exec1' },
+  'Risk Owner': { u: 'riskowner', p: 'RiskLens@Risk1' },
+  'Control Owner': { u: 'consultant', p: 'RiskLens@Consult1' },
+};
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard')
-  const [loading, setLoading] = useState(true)
-  const [reseeding, setReseeding] = useState(false)
-  const [notification, setNotification] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [currentRole, setCurrentRole] = useState<string>('Consultant');
+  const [loading, setLoading] = useState(true);
+  const [reseeding, setReseeding] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
 
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [risks, setRisks] = useState<Risk[]>([])
-  const [controls, setControls] = useState<Control[]>([])
-  const [remediation, setRemediation] = useState<RemediationItem[]>([])
-  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [controls, setControls] = useState<Control[]>([]);
+  const [remediation, setRemediation] = useState<RemediationItem[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+
+  // Authenticate on startup with default Consultant role
+  const authenticateRole = async (role: string) => {
+    const creds = DEMO_CREDENTIALS[role] || DEMO_CREDENTIALS['Consultant'];
+    try {
+      const res = await authApi.login(creds.u, creds.p);
+      setAccessToken(res.access_token);
+      setCurrentRole(role);
+      setNotification(`Switched role to ${role} (${res.user.full_name || creds.u})`);
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err) {
+      console.warn('Auto-login failed (demo mode running without auth constraint):', err);
+      setCurrentRole(role);
+    }
+  };
 
   const loadAllData = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [statsData, risksData, controlsData, remData, vendorsData] = await Promise.all([
         getDashboard(),
         getRisks(),
         getControls(),
         getRemediation(),
         getVendors(),
-      ])
-      setStats(statsData)
-      setRisks(risksData)
-      setControls(controlsData)
-      setRemediation(remData)
-      setVendors(vendorsData)
+      ]);
+      setStats(statsData);
+      setRisks(risksData);
+      setControls(controlsData);
+      setRemediation(remData);
+      setVendors(vendorsData);
     } catch (err: any) {
-      console.error('Failed to load GRC data:', err)
-      setNotification('Backend connection error. Ensure FastAPI backend is running.')
+      console.error('Failed to load GRC data:', err);
+      setNotification('Backend connection error. Ensure FastAPI backend is running on port 8000.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadAllData()
-  }, [])
+    authenticateRole('Consultant').then(() => {
+      loadAllData();
+    });
+  }, []);
+
+  const handleRoleChange = async (newRole: string) => {
+    await authenticateRole(newRole);
+  };
 
   const handleReseed = async () => {
     if (
       !confirm(
-        'Reset synthetic database? This will restore 25+ realistic risks, 30+ controls, 15+ remediation items, and 10+ third-party vendors for Apex Financial Services.'
+        'Reset synthetic database? This will restore 30+ realistic risks, 30+ controls, NIST CSF maturity ratings, regulatory crosswalks, remediation items, and third-party vendors for Apex Financial Services.'
       )
     ) {
-      return
+      return;
     }
 
     try {
-      setReseeding(true)
-      await reseedDatabase()
-      setNotification('✅ Synthetic demo database reset successfully!')
-      await loadAllData()
-      setTimeout(() => setNotification(null), 4000)
+      setReseeding(true);
+      await reseedDatabase();
+      setNotification('✅ Synthetic demo database reset successfully with all v2.0 models!');
+      await loadAllData();
+      setTimeout(() => setNotification(null), 4000);
     } catch (err: any) {
-      console.error('Failed to reseed:', err)
-      setNotification('Failed to reseed database.')
+      console.error('Failed to reseed:', err);
+      setNotification('Failed to reseed database.');
     } finally {
-      setReseeding(false)
+      setReseeding(false);
     }
-  }
+  };
 
   const handleSaveRisk = async (riskData: Partial<Risk>) => {
     if (riskData.risk_id && risks.some((r) => r.risk_id === riskData.risk_id)) {
-      await updateRisk(riskData.risk_id, riskData)
+      await updateRisk(riskData.risk_id, riskData);
     } else {
-      await createRisk(riskData)
+      await createRisk(riskData);
     }
-    await loadAllData()
-  }
+    await loadAllData();
+  };
 
   const handleDeleteRisk = async (riskId: string) => {
-    await deleteRisk(riskId)
-    await loadAllData()
-  }
+    await deleteRisk(riskId);
+    await loadAllData();
+  };
 
   const handleUpdateControl = async (controlId: string, data: Partial<Control>) => {
-    await updateControl(controlId, data)
-    await loadAllData()
-  }
+    await updateControl(controlId, data);
+    await loadAllData();
+  };
 
   const handleUpdateRemediation = async (id: string, data: Partial<RemediationItem>) => {
-    await updateRemediationItem(id, data)
-    await loadAllData()
-  }
+    await updateRemediationItem(id, data);
+    await loadAllData();
+  };
 
   const handleUpdateVendor = async (id: string, data: Partial<Vendor>) => {
-    await updateVendor(id, data)
-    await loadAllData()
-  }
+    await updateVendor(id, data);
+    await loadAllData();
+  };
 
   return (
     <div className="min-h-screen bg-navy-900 text-slate-100 flex flex-col font-sans">
@@ -127,6 +168,8 @@ export function App() {
         riskCount={risks.length}
         gapCount={stats?.open_control_gaps}
         overdueCount={stats?.overdue_remediation}
+        currentRole={currentRole}
+        onRoleChange={handleRoleChange}
       />
 
       {/* Floating Status / Feedback Notification */}
@@ -169,6 +212,16 @@ export function App() {
           />
         )}
 
+        {activeTab === 'maturity' && <MaturityView />}
+
+        {activeTab === 'compliance' && <ComplianceView />}
+
+        {activeTab === 'telemetry' && (
+          <ContinuousControlMonitoringView onNotify={(msg) => setNotification(msg)} />
+        )}
+
+        {activeTab === 'threats' && <ThreatsView />}
+
         {activeTab === 'remediation' && (
           <RemediationTrackerView
             items={remediation}
@@ -185,23 +238,30 @@ export function App() {
           />
         )}
 
+        {activeTab === 'simulation' && <SimulationPlaygroundView />}
+
+        {activeTab === 'audit' && <AuditLogView />}
+
         {activeTab === 'reports' && <ReportsView />}
       </main>
+
+      {/* Global Interactive Executive Q&A & CISO Copilot Drawer */}
+      <CisoCopilotDrawer />
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-navy-900/90 py-6 text-xs text-slate-400 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div>
-            <span className="font-semibold text-slate-300">RiskLens GRC Platform</span> • Enterprise Cybersecurity Risk & Controls Assessment
+            <span className="font-semibold text-slate-300">RiskLens GRC Platform v2.0</span> • Enterprise Cybersecurity Risk & Controls Assessment
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Simulated engagement for <strong>Apex Financial Services</strong> (Synthetic Data Only). Framework mappings to NIST CSF 2.0 & ISO/IEC 27001:2022.
+              Simulated engagement for <strong>Apex Financial Services</strong> (Synthetic Data Only). Framework mappings to NIST CSF 2.0, ISO/IEC 27001:2022, RBI IT Framework, DPDP Act 2023 & PCI DSS 4.0.1.
             </p>
           </div>
           <div className="text-[11px] text-slate-400">
-            Portfolio Project • React + TypeScript + FastAPI + SQLite
+            Portfolio Project • React + TypeScript + FastAPI + SQLite / PostgreSQL
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }

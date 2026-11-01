@@ -11,6 +11,8 @@ htmlcov/
 .pytest_cache/
 
 # Databases & test files
+*.db
+*.sqlite3
 backend/test_*.db
 backend/app/test_*.db
 test_debug.db
@@ -34,3 +36,4 @@ Thumbs.db
 .idea/
 .vercel
 .env*
+.github/workflows/

@@ -46,7 +46,9 @@ class TestResidualRisk:
         assert calculate_residual_risk(20, 0) == 20.0
 
     def test_full_mitigation(self):
-        assert calculate_residual_risk(20, 100) == 0.0
+        # Minimum residual is 1.0 — complete risk elimination is not achievable.
+        # 20 × (1 - 1.0) = 0.0, but min floor is enforced → 1.0
+        assert calculate_residual_risk(20, 100) == 1.0
 
     def test_half_mitigation(self):
         assert calculate_residual_risk(20, 50) == 10.0

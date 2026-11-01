@@ -34,9 +34,14 @@ def client():
     Base.metadata.create_all(bind=test_engine)
 
     # Seed via the private seed functions
-    from app.seed import _seed_risks, _seed_controls, _seed_remediation, _seed_vendors
+    from app.seed import (
+        _seed_risks, _seed_controls, _seed_remediation, _seed_vendors,
+        _seed_users, _seed_risk_appetite,
+    )
     db = TestSession()
     try:
+        _seed_users(db)
+        _seed_risk_appetite(db)
         _seed_risks(db)
         _seed_controls(db)
         _seed_remediation(db)
@@ -56,7 +61,22 @@ def client():
             db.close()
 
     from app.main import app
+    from app.auth import get_current_user
+    from app import models as app_models
+
+    # Override DB
     app.dependency_overrides[get_db] = override_get_db
+
+    # Override auth: return a mock consultant user so write endpoints work in tests
+    mock_user = app_models.User(
+        id=999,
+        username="test_consultant",
+        email="test@apex.demo",
+        hashed_password="x",
+        role=app_models.UserRole.CONSULTANT,
+        is_active=True,
+    )
+    app.dependency_overrides[get_current_user] = lambda: mock_user
 
     from fastapi.testclient import TestClient
     with TestClient(app) as c:

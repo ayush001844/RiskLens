@@ -12,10 +12,11 @@ Synthetic seed data for RiskLens — Apex Financial Services engagement.
     compliance determination.
 """
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from app.database import SessionLocal, engine, Base
 from app import models
 from app.scoring import calculate_inherent_risk, calculate_residual_risk
+from app.auth import hash_password
 
 
 def reseed():
@@ -25,12 +26,17 @@ def reseed():
 
     db = SessionLocal()
     try:
+        _seed_users(db)
+        _seed_risk_appetite(db)
         _seed_risks(db)
         _seed_controls(db)
         _seed_remediation(db)
         _seed_vendors(db)
+        _seed_maturity_assessment(db)
+        _seed_compliance_frameworks(db)
+        _seed_threat_scenarios(db)
         db.commit()
-        print("✅  Seed complete — synthetic demo data loaded for Apex Financial Services.")
+        print("\u2705  Seed complete \u2014 synthetic demo data loaded for Apex Financial Services.")
     except Exception as exc:
         db.rollback()
         raise exc
@@ -809,6 +815,434 @@ def _seed_vendors(db):
             assessment_date=assess_date,
             contact_name=contact,
         ))
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# USERS (demo credentials)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _seed_users(db):
+    """Seed demo user accounts. Passwords are hashed with bcrypt."""
+    demo_users = [
+        ("admin", "admin@apex.demo", "RiskLens@Admin1", "Platform Administrator", "Administrator", "IT Security"),
+        ("consultant", "consultant@apex.demo", "RiskLens@Consult1", "Senior GRC Consultant", "Consultant", "Consulting"),
+        ("auditor", "auditor@apex.demo", "RiskLens@Audit1", "Internal Auditor", "Auditor", "Internal Audit"),
+        ("executive", "executive@apex.demo", "RiskLens@Exec1", "Chief Information Security Officer", "Executive", "CISO Office"),
+        ("riskowner", "riskowner@apex.demo", "RiskLens@Risk1", "IT Security Manager", "Risk Owner", "IT Security"),
+    ]
+    for username, email, password, full_name, role, bu in demo_users:
+        db.add(models.User(
+            username=username,
+            email=email,
+            hashed_password=hash_password(password),
+            full_name=full_name,
+            role=role,
+            business_unit=bu,
+            is_active=True,
+        ))
+    db.flush()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RISK APPETITE CONFIGURATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _seed_risk_appetite(db):
+    """Seed the Apex Financial Services risk appetite configuration."""
+    db.add(models.RiskAppetiteConfig(
+        organisation_name="Apex Financial Services",
+        max_acceptable_inherent_risk=15,
+        max_acceptable_residual_risk=9,
+        risk_tolerance_upper=12,
+        escalation_threshold=20,
+        risk_review_frequency_days=90,
+        acceptance_max_duration_days=365,
+        acceptance_authority_low="Risk Owner",
+        acceptance_authority_medium="CISO",
+        acceptance_authority_high="CRO",
+        acceptance_authority_critical="Board / Risk Committee",
+        appetite_statement=(
+            "Apex Financial Services is willing to accept a low level of residual cybersecurity risk "
+            "where the risk is well-understood, controls are in place, and the potential impact is "
+            "within the organisation's financial and operational recovery capacity. Risks rated Critical "
+            "(residual score ≥ 15) require Board or Risk Committee approval before acceptance. "
+            "Risks rated High (10–14) require CRO sign-off. No risk that could result in customer data "
+            "loss affecting more than 10,000 individuals will be accepted without board notification."
+        ),
+        last_reviewed=date(2025, 9, 30),
+        reviewed_by="Chief Risk Officer",
+        effective_date=date(2025, 10, 1),
+    ))
+    db.flush()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NIST CSF 2.0 MATURITY ASSESSMENT
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _seed_maturity_assessment(db):
+    """Seed a representative NIST CSF 2.0 maturity assessment for Apex Financial Services."""
+    db.add(models.MaturityAssessment(
+        assessment_id="MAT-001",
+        organisation_name="Apex Financial Services",
+        assessment_date=date(2025, 10, 15),
+        assessor="Senior GRC Consultant",
+        scope_description=(
+            "This assessment covers the core IT infrastructure, digital lending platform, "
+            "payment processing systems, customer data management, and third-party vendor "
+            "ecosystem of Apex Financial Services. Cloud-hosted applications on AWS and Azure "
+            "are included within scope."
+        ),
+        # Current tiers
+        govern_current="Tier 2 - Risk Informed",
+        identify_current="Tier 2 - Risk Informed",
+        protect_current="Tier 1 - Partial",
+        detect_current="Tier 1 - Partial",
+        respond_current="Tier 1 - Partial",
+        recover_current="Tier 2 - Risk Informed",
+        # Target tiers
+        govern_target="Tier 3 - Repeatable",
+        identify_target="Tier 3 - Repeatable",
+        protect_target="Tier 3 - Repeatable",
+        detect_target="Tier 2 - Risk Informed",
+        respond_target="Tier 2 - Risk Informed",
+        recover_target="Tier 3 - Repeatable",
+        # Justifications
+        govern_justification=(
+            "Risk governance policies exist and are reviewed annually. Risk appetite is documented "
+            "but not consistently communicated to all business units. Escalation pathways are defined "
+            "but not always followed in practice. Target: formalize risk governance with board oversight "
+            "and integrate risk considerations into strategic planning."
+        ),
+        identify_justification=(
+            "Asset inventory exists in CMDB but is not maintained in real-time. Critical assets are "
+            "identified but business context mapping is incomplete. Third-party risk identification "
+            "is ad-hoc. Target: implement automated asset discovery and formal vendor risk classification."
+        ),
+        protect_justification=(
+            "Multi-factor authentication is not enforced across all systems. Patch management is "
+            "reactive with a 90+ day average lag. Data encryption at rest is not consistently applied. "
+            "Target: deploy MFA universally, automate patch management, and implement DLP controls."
+        ),
+        detect_justification=(
+            "No centralised SIEM. Log retention is below 90 days on some systems. Alerting is "
+            "manual and inconsistent. No security monitoring for cloud workloads. Target: deploy "
+            "SIEM with correlation rules, 12-month log retention, and cloud-native monitoring."
+        ),
+        respond_justification=(
+            "Incident Response Plan exists but was last updated in 2021. No tabletop exercises "
+            "conducted. Response roles and escalation contacts are not documented in the IRP. "
+            "Target: update IRP, conduct annual tabletop exercises, and define response playbooks."
+        ),
+        recover_justification=(
+            "DR plan documented and reviewed. BCP exists but restoration has not been tested. "
+            "RTO/RPO defined for critical systems but not validated through live exercises. "
+            "Target: conduct annual DR test, validate RTO/RPO, and implement cloud-based failover."
+        ),
+        overall_assessment=(
+            "Apex Financial Services currently operates at Tier 1 (Partial) to Tier 2 (Risk Informed) "
+            "across most NIST CSF 2.0 functions. The most significant gaps are in PROTECT and DETECT, "
+            "where foundational controls such as universal MFA, centralised SIEM, and automated patch "
+            "management are absent. GOVERN and RECOVER show relative strength, with documented policies "
+            "and recovery plans in place, though these have not been consistently tested."
+        ),
+        improvement_roadmap=(
+            "Priority 1 (0–90 days): Deploy MFA, engage SIEM vendor, update Incident Response Plan. "
+            "Priority 2 (90–180 days): Implement automated patch management, establish security monitoring. "
+            "Priority 3 (180–365 days): Conduct DR test, formalise risk governance with board reporting, "
+            "implement DLP and data classification programme."
+        ),
+    ))
+    db.flush()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPLIANCE FRAMEWORKS AND REQUIREMENTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _seed_compliance_frameworks(db):
+    """Seed regulatory and standards frameworks applicable to Apex Financial Services."""
+
+    frameworks_data = [
+        {
+            "framework_id": "NIST-CSF-2",
+            "name": "NIST Cybersecurity Framework 2.0",
+            "version": "2.0 (February 2024)",
+            "issuing_body": "National Institute of Standards and Technology (NIST)",
+            "is_regulatory": False,
+            "applicability_note": "Voluntary framework adopted as baseline for cybersecurity risk management.",
+            "requirements": [
+                ("NIST-CSF-GV.OC-01", "Organisational Mission and Objectives", "The organisational mission is understood and informs cybersecurity risk management decisions."),
+                ("NIST-CSF-GV.RM-01", "Risk Management Strategy", "Risk management objectives are established and agreed to by organisational stakeholders."),
+                ("NIST-CSF-GV.RM-02", "Risk Appetite and Tolerance", "Risk appetite and risk tolerance statements informed by mission and stakeholder risk expectations."),
+                ("NIST-CSF-ID.AM-01", "Asset Inventory — Hardware", "IT hardware assets within the scope of the organisation are inventoried."),
+                ("NIST-CSF-ID.AM-02", "Asset Inventory — Software", "IT software assets within the scope of the organisation are inventoried."),
+                ("NIST-CSF-PR.AA-01", "Identity Management", "Identities and credentials for authorised users, services, and hardware are managed."),
+                ("NIST-CSF-PR.AA-02", "Access Control", "Access to physical and logical assets is managed, incorporating the principles of least privilege."),
+                ("NIST-CSF-PR.DS-01", "Data at Rest Protection", "Data-at-rest is protected."),
+                ("NIST-CSF-PR.DS-02", "Data in Transit Protection", "Data-in-transit is protected."),
+                ("NIST-CSF-DE.CM-01", "Monitoring for Anomalies", "Networks and network services are monitored to find potentially adverse events."),
+                ("NIST-CSF-DE.AE-01", "Adverse Event Analysis", "A baseline of network operations and expected data flows for users and systems is established."),
+                ("NIST-CSF-RS.MA-01", "Incident Classification", "Potential cybersecurity incidents are assessed to determine their characteristics."),
+                ("NIST-CSF-RC.RP-01", "Recovery Planning", "A recovery plan is executed to restore systems and services affected by a cybersecurity incident."),
+            ],
+        },
+        {
+            "framework_id": "ISO-27001-2022",
+            "name": "ISO/IEC 27001:2022",
+            "version": "2022",
+            "issuing_body": "International Organization for Standardization (ISO) / IEC",
+            "is_regulatory": False,
+            "applicability_note": "International standard for ISMS. Target certification within 24 months.",
+            "requirements": [
+                ("ISO-A.5.1", "Policies for information security", "Information security policy defined, approved, published and communicated."),
+                ("ISO-A.5.10", "Acceptable use of information and assets", "Rules for acceptable use of information and assets documented."),
+                ("ISO-A.5.15", "Access control", "Rules to control physical and logical access based on business and information security requirements."),
+                ("ISO-A.5.16", "Identity management", "Full life cycle of identities managed."),
+                ("ISO-A.5.23", "Information security for cloud services", "Processes for acquisition, use, management, and exit from cloud services established."),
+                ("ISO-A.8.2", "Privileged access rights", "Allocation and use of privileged access rights restricted and managed."),
+                ("ISO-A.8.3", "Information access restriction", "Access to information and application system functions restricted per access control policy."),
+                ("ISO-A.8.7", "Protection against malware", "Protection against malware implemented and supported by appropriate user awareness."),
+                ("ISO-A.8.8", "Management of technical vulnerabilities", "Information on technical vulnerabilities obtained and actions evaluated."),
+                ("ISO-A.8.16", "Monitoring activities", "Networks, systems and applications monitored for anomalous behaviour."),
+                ("ISO-A.8.24", "Use of cryptography", "Rules for effective use of cryptography including key management defined and implemented."),
+            ],
+        },
+        {
+            "framework_id": "RBI-IT",
+            "name": "RBI IT Framework for Banks",
+            "version": "2023 Update",
+            "issuing_body": "Reserve Bank of India (RBI)",
+            "is_regulatory": True,
+            "applicability_note": "Mandatory for RBI-regulated entities. Apex Financial Services falls under RBI's digital lending guidelines.",
+            "requirements": [
+                ("RBI-IT-1.1", "IT Governance Framework", "Board-level IT Strategy Committee established with defined charter and responsibilities."),
+                ("RBI-IT-1.2", "IT Risk Management", "IT Risk Management Framework integrated with enterprise risk management."),
+                ("RBI-IT-2.1", "Information and Cyber Security", "CISO appointed with adequate authority and reporting to Board."),
+                ("RBI-IT-2.2", "Cyber Security Policy", "Board-approved cyber security policy reviewed at least annually."),
+                ("RBI-IT-2.3", "Security Operations Centre", "24x7 Security Operations Centre (SOC) or equivalent capability established."),
+                ("RBI-IT-3.1", "Business Continuity Planning", "BCP covering critical IT systems with tested RTO and RPO."),
+                ("RBI-IT-3.2", "Disaster Recovery", "DR site with tested failover capability. Annual DR drill mandatory."),
+                ("RBI-IT-4.1", "Outsourcing Risk Management", "Vendor risk policy covering due diligence, contracts, and ongoing monitoring."),
+                ("RBI-IT-5.1", "Customer Data Protection", "Controls to protect customer data including encryption and access restrictions."),
+            ],
+        },
+        {
+            "framework_id": "DPDP-2023",
+            "name": "Digital Personal Data Protection Act 2023",
+            "version": "2023",
+            "issuing_body": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+            "is_regulatory": True,
+            "applicability_note": "Applicable as Apex processes personal data of Indian digital lending customers.",
+            "requirements": [
+                ("DPDP-1", "Notice and Consent", "Clear notice given to data principals with purpose of processing and consent obtained."),
+                ("DPDP-2", "Purpose Limitation", "Personal data processed only for specified, lawful purposes."),
+                ("DPDP-3", "Data Minimisation", "Only personal data necessary for stated purpose collected and processed."),
+                ("DPDP-4", "Data Accuracy", "Reasonable steps taken to ensure personal data is accurate, complete, and consistent."),
+                ("DPDP-5", "Storage Limitation", "Personal data retained only as long as necessary for purpose; deleted thereafter."),
+                ("DPDP-6", "Data Security Safeguards", "Appropriate technical and organisational safeguards to prevent personal data breach."),
+                ("DPDP-7", "Breach Notification", "Data breach notified to Data Protection Board and affected data principals promptly."),
+                ("DPDP-8", "Data Fiduciary Obligations", "Data Fiduciary's obligations including grievance redressal mechanism established."),
+            ],
+        },
+        {
+            "framework_id": "PCI-DSS-4",
+            "name": "PCI DSS 4.0.1",
+            "version": "4.0.1 (March 2024)",
+            "issuing_body": "Payment Card Industry Security Standards Council (PCI SSC)",
+            "is_regulatory": False,
+            "applicability_note": "Applicable due to Apex's payment gateway integrations processing card data.",
+            "requirements": [
+                ("PCI-1.1", "Network Security Controls", "Network security controls (firewalls, routers) installed and configured."),
+                ("PCI-2.1", "Vendor Default Credentials", "Vendor default passwords changed before deployment."),
+                ("PCI-3.1", "Cardholder Data Protection", "Cardholder data stored securely with PAN masked or encrypted."),
+                ("PCI-4.1", "Encryption in Transit", "Strong cryptography for transmission of cardholder data over open public networks."),
+                ("PCI-6.1", "Secure Development", "Processes and mechanisms for developing and maintaining secure systems."),
+                ("PCI-8.1", "User Authentication", "User identification and authentication for all users managed appropriately."),
+                ("PCI-10.1", "Audit Logging", "All access to system components and cardholder data logged."),
+                ("PCI-11.1", "Security Testing", "Security vulnerabilities and weaknesses identified and protected against."),
+                ("PCI-12.1", "Information Security Policy", "Comprehensive information security policy established and maintained."),
+            ],
+        },
+    ]
+
+    # Assessment statuses for demo (mix to show realistic picture)
+    status_map = {
+        "NIST-CSF-GV.OC-01": "Compliant", "NIST-CSF-GV.RM-01": "Partially Compliant",
+        "NIST-CSF-GV.RM-02": "Partially Compliant", "NIST-CSF-ID.AM-01": "Partially Compliant",
+        "NIST-CSF-ID.AM-02": "Non-Compliant", "NIST-CSF-PR.AA-01": "Partially Compliant",
+        "NIST-CSF-PR.AA-02": "Non-Compliant", "NIST-CSF-PR.DS-01": "Non-Compliant",
+        "NIST-CSF-PR.DS-02": "Compliant", "NIST-CSF-DE.CM-01": "Non-Compliant",
+        "NIST-CSF-DE.AE-01": "Non-Compliant", "NIST-CSF-RS.MA-01": "Partially Compliant",
+        "NIST-CSF-RC.RP-01": "Partially Compliant",
+        "ISO-A.5.1": "Compliant", "ISO-A.5.10": "Compliant", "ISO-A.5.15": "Partially Compliant",
+        "ISO-A.5.16": "Non-Compliant", "ISO-A.5.23": "Not Assessed",
+        "ISO-A.8.2": "Non-Compliant", "ISO-A.8.3": "Partially Compliant",
+        "ISO-A.8.7": "Compliant", "ISO-A.8.8": "Non-Compliant",
+        "ISO-A.8.16": "Non-Compliant", "ISO-A.8.24": "Partially Compliant",
+    }
+
+    for fw_data in frameworks_data:
+        reqs = fw_data.pop("requirements")
+        fw = models.ComplianceFramework(**fw_data)
+        db.add(fw)
+        db.flush()
+
+        for i, (req_id, title, description) in enumerate(reqs):
+            status = status_map.get(req_id, "Not Assessed")
+            db.add(models.ComplianceRequirement(
+                requirement_id=req_id,
+                framework_id=fw.id,
+                framework_ref=fw.framework_id,
+                title=title,
+                description=description,
+                requirement_text=description,
+                is_applicable=True,
+                assessment_status=status,
+                last_assessed_date=date(2025, 10, 15),
+            ))
+    db.flush()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# THREAT SCENARIOS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _seed_threat_scenarios(db):
+    """Seed MITRE ATT&CK-mapped threat scenarios for key Apex Financial Services risks."""
+    scenarios = [
+        models.ThreatScenario(
+            scenario_id="THR-001",
+            risk_ref="RSK-001",
+            title="Credential Stuffing Attack on Core Banking Portal",
+            threat_actor_category="External - Cybercriminal",
+            threat_actor_motivation="Financial gain — account takeover for fund transfer fraud",
+            attack_techniques=[
+                {"id": "T1078", "name": "Valid Accounts", "tactic": "Initial Access"},
+                {"id": "T1110.004", "name": "Credential Stuffing", "tactic": "Credential Access"},
+                {"id": "T1539", "name": "Steal Web Session Cookie", "tactic": "Credential Access"},
+            ],
+            target_asset="Core Banking Portal",
+            attack_preconditions=(
+                "Attacker has purchased a credential database from a dark-web marketplace. "
+                "Target portal accepts username/password authentication without MFA. "
+                "No account lockout or velocity throttling is enforced."
+            ),
+            preventive_controls=(
+                "MFA enforcement (NOT IMPLEMENTED), account lockout policy (PARTIAL), "
+                "CAPTCHA on login form (IMPLEMENTED)"
+            ),
+            detective_controls=(
+                "Failed login alerting (NOT IMPLEMENTED), "
+                "Geographic anomaly detection (NOT IMPLEMENTED)"
+            ),
+            detection_gaps=(
+                "No SIEM to correlate failed login attempts across sessions. "
+                "No baseline for normal user login volumes. "
+                "No alerting on multiple accounts accessed from a single IP."
+            ),
+            business_consequences=(
+                "Unauthorised access to customer accounts; fraudulent fund transfers; "
+                "regulatory penalties under RBI IT Framework; customer trust damage."
+            ),
+            recommended_mitigations=(
+                "1. Enforce MFA for all internet-facing portals immediately. "
+                "2. Implement rate limiting and IP-based blocking for excessive failed logins. "
+                "3. Deploy SIEM with credential stuffing detection use case. "
+                "4. Subscribe to Have I Been Pwned API for compromised credential checking."
+            ),
+        ),
+        models.ThreatScenario(
+            scenario_id="THR-002",
+            risk_ref="RSK-005",
+            title="Exploitation of Unpatched CVE in Internet-Facing Server",
+            threat_actor_category="External - Opportunistic Attacker",
+            threat_actor_motivation="Financial gain, ransomware deployment",
+            attack_techniques=[
+                {"id": "T1190", "name": "Exploit Public-Facing Application", "tactic": "Initial Access"},
+                {"id": "T1059", "name": "Command and Scripting Interpreter", "tactic": "Execution"},
+                {"id": "T1486", "name": "Data Encrypted for Impact (Ransomware)", "tactic": "Impact"},
+                {"id": "T1570", "name": "Lateral Tool Transfer", "tactic": "Lateral Movement"},
+            ],
+            target_asset="Web/App Server Infrastructure",
+            attack_preconditions=(
+                "Public CVE with exploit code is available for a component running on Apex servers. "
+                "Patch has been available for 30+ days but not applied due to 90-day patch lag. "
+                "Server is internet-accessible on standard ports."
+            ),
+            preventive_controls=(
+                "Patch management process (PARTIALLY IMPLEMENTED — 90+ day lag), "
+                "WAF (IMPLEMENTED on some assets), network segmentation (PARTIAL)"
+            ),
+            detective_controls=(
+                "IDS/IPS (NOT IMPLEMENTED), SIEM (NOT IMPLEMENTED), "
+                "server-based EDR (PARTIAL coverage)"
+            ),
+            detection_gaps=(
+                "Without SIEM, exploitation activity will not be detected until impact. "
+                "No network-level detection of lateral movement. "
+                "EDR coverage is incomplete — some legacy servers are unmonitored."
+            ),
+            business_consequences=(
+                "Server compromise; ransomware deployment causing extended downtime; "
+                "potential data exfiltration; regulatory notification requirements; "
+                "estimated recovery cost ₹2–5 crore for a major incident."
+            ),
+            recommended_mitigations=(
+                "1. Reduce patch lag to ≤30 days for critical CVEs; ≤15 days for actively exploited. "
+                "2. Deploy automated patch management (WSUS/Qualys). "
+                "3. Implement network-based IDS/IPS. "
+                "4. Complete EDR rollout to all servers including legacy systems."
+            ),
+        ),
+        models.ThreatScenario(
+            scenario_id="THR-003",
+            risk_ref="RSK-004",
+            title="Supply Chain Attack via Compromised Third-Party API",
+            threat_actor_category="External - Advanced Persistent Threat (APT)",
+            threat_actor_motivation="Data exfiltration, long-term access to financial data",
+            attack_techniques=[
+                {"id": "T1195.002", "name": "Compromise Software Supply Chain", "tactic": "Initial Access"},
+                {"id": "T1071.001", "name": "Web Protocols (C2)", "tactic": "Command and Control"},
+                {"id": "T1041", "name": "Exfiltration Over C2 Channel", "tactic": "Exfiltration"},
+            ],
+            target_asset="Third-Party Credit Bureau / KYC API Integration",
+            attack_preconditions=(
+                "Apex relies on third-party APIs for credit scoring and KYC. "
+                "No formal security assessment of these vendors was conducted. "
+                "API communication uses shared API keys without rotation. "
+                "No monitoring of API response anomalies."
+            ),
+            preventive_controls=(
+                "API key authentication (IMPLEMENTED — no rotation), "
+                "HTTPS for transit (IMPLEMENTED), vendor security assessment (NOT IMPLEMENTED)"
+            ),
+            detective_controls=(
+                "API response monitoring (NOT IMPLEMENTED), "
+                "DLP on outbound data (NOT IMPLEMENTED)"
+            ),
+            detection_gaps=(
+                "No monitoring of unusual API response payloads. "
+                "No baseline of expected API data volumes to detect exfiltration. "
+                "No alerting on API key usage from unexpected IPs."
+            ),
+            business_consequences=(
+                "Mass exfiltration of customer personal and financial data; "
+                "DPDP Act 2023 breach notification obligations; "
+                "reputational damage and loss of customer trust."
+            ),
+            recommended_mitigations=(
+                "1. Conduct security assessment of all critical third-party API vendors. "
+                "2. Implement API key rotation every 90 days. "
+                "3. Deploy API gateway with anomaly detection and rate limiting. "
+                "4. Require vendors to provide SOC 2 Type II reports annually."
+            ),
+        ),
+    ]
+    for s in scenarios:
+        db.add(s)
+    db.flush()
 
 
 if __name__ == "__main__":

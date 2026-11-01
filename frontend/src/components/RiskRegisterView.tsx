@@ -374,7 +374,7 @@ export const RiskRegisterView: React.FC<RiskRegisterViewProps> = ({
 
                         {/* Existing Controls & Effectiveness */}
                         <td className="text-xs max-w-[180px]">
-                          <div className="truncate text-slate-300" title={risk.existing_controls}>
+                          <div className="truncate text-slate-300" title={risk.existing_controls || undefined}>
                             {risk.existing_controls || 'No formal controls'}
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">

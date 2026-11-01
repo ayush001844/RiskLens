@@ -248,7 +248,7 @@ export const VendorRiskView: React.FC<VendorRiskViewProps> = ({
                         </span>
                       </td>
 
-                      <td className="text-xs text-slate-300 max-w-[200px] truncate" title={vnd.access_privileges}>
+                      <td className="text-xs text-slate-300 max-w-[200px] truncate" title={vnd.access_privileges || undefined}>
                         {vnd.access_privileges}
                       </td>
 

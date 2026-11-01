@@ -1,7 +1,7 @@
-# RiskLens — Enterprise Cybersecurity Risk & Controls Assessment Platform
+# RiskLens v2.0 — Enterprise Cybersecurity GRC Platform
 
-> **Portfolio Showcase Project**: Simulating a cybersecurity consulting engagement for **Apex Financial Services Ltd.** (Fictional Indian Financial Services / FinTech company).  
-> ⚠️ **Disclaimer**: All company assets, vendors, evidence records, findings, and metrics in this platform are **100% synthetic demo records**. Framework mappings to NIST CSF 2.0 and ISO/IEC 27001:2022 are for educational demonstration and do not constitute an official compliance determination or certification.
+> **Portfolio Showcase Project**: Simulating an enterprise cybersecurity consulting engagement for **Apex Financial Services Ltd.** (Fictional FinTech / NBFC institution).  
+> ⚠️ **Disclaimer**: All company assets, vendors, evidence records, findings, and metrics in this platform are **100% synthetic demo records**. Framework mappings to NIST CSF 2.0, ISO/IEC 27001:2022, RBI IT Framework, DPDP Act 2023, and PCI DSS 4.0.1 are for educational demonstration and do not constitute an official compliance determination or certification.
 
 ---
 
@@ -18,49 +18,18 @@ RiskLens simulates an enterprise GRC (Governance, Risk, and Compliance) advisory
 
 ---
 
-## 🚀 Key Modules & Architecture
+## 🚀 Key Modules & Architecture (10 Integrated Views)
 
-### 1. 📊 Executive Dashboard
-- **Dynamic KPI Telemetry**: Total assessed risks, high & critical scenarios, open control gaps, overdue remediation actions, and third-party vendor count calculated live from the database.
-- **Interactive 5 × 5 Inherent Risk Heat Matrix**: Plots Likelihood (1–5) vs. Business Impact (1–5) with live hover inspections and cell filtering.
-- **Recharts Visualizations**:
-  - Inherent vs. Residual Risk Reduction grouped bar chart
-  - Risk distribution by business domain (Identity, Cloud, AppSec, Data Protection, etc.)
-  - Control assessment effectiveness donut chart
-  - Remediation action status distribution
-
-### 2. ⚠️ Enterprise Risk Register
-- **25 Realistic Synthetic Risk Scenarios**: Missing MFA on bastion hosts, unpatched payment API vulnerabilities, stale privileged IAM keys, untested DR failover, customer database backups unencrypted, delayed patch cycles, etc.
-- **Documented 5×5 Scoring Engine**:
-  $$\text{Inherent Risk Score} = \text{Likelihood (1–5)} \times \text{Impact (1–5)} \quad [1 - 25]$$
-  - **Low**: 1–4 (Green)
-  - **Medium**: 5–9 (Yellow)
-  - **High**: 10–14 (Orange)
-  - **Critical**: 15–25 (Red)
-- **Residual Risk Calculation**:
-  $$\text{Residual Risk Score} = \max\left(1.0, \, \text{round}\left(\text{Inherent Score} \times (1 - \frac{\text{Control Effectiveness \%}}{100}), 1\right)\right)$$
-- **Features**: Real-time interactive scoring slider in Add/Edit modal, search, multi-factor filtering, expandable row details, and CSV export.
-
-### 3. 🛡️ Control Assessment (NIST CSF 2.0 & ISO/IEC 27001:2022)
-- **30 Evaluated Cybersecurity Controls** mapped to:
-  - **NIST CSF 2.0**: GOVERN (`GV.OC`), IDENTIFY (`ID.AM`, `ID.RA`), PROTECT (`PR.AA`, `PR.DS`, `PR.PS`), DETECT (`DE.CM`, `DE.AE`), RESPOND (`RS.MA`), RECOVER (`RC.RP`).
-  - **ISO/IEC 27001:2022 Annex A**: A.5 (Organizational), A.7 (Physical), A.8 (Technological: Privileged Access, Threat Intel, Secure Coding, Backup, Cryptography).
-- **Audit Verification Fields**: Evidence documentation, evidence status (Provided, Pending, Missing, Expired), effectiveness determination (Effective, Partially Effective, Ineffective, Not Tested), and corrective recommendations.
-
-### 4. 🎯 Remediation Tracker
-- **15 Corrective Action Items**: Directly tied to identified risk scenarios and control deficiencies.
-- **SLA & Overdue Engine**: Automatic calculation of overdue status against scheduled target dates.
-- **Workflow State Management**: Open, In Progress, Completed, Overdue, and Deferred with mandatory closure verification artifact notes.
-
-### 5. 🏢 Third-Party Vendor Risk Assessment (SCRM)
-- **10 Synthetic Cloud & SaaS Vendors**: AWS Mumbai, Razorpay Gateway, Snowflake Data Cloud, Salesforce CRM, Okta IDP, Cloudflare CDN/WAF, Zendesk Support, Infosys SOC Outsourcing, TCS Core Banking Support, CrowdStrike Falcon EDR.
-- **Evaluation Criteria**: Inherent risk, residual risk, data sensitivity (Restricted, Confidential, Internal, Public), access privileges, identified control weaknesses, and contract review dates.
-
-### 6. 📄 Consulting Assessment Reports & CSV Exports
-- **Executive Deliverable Report**: Client-ready format containing Executive Summary, Scope & Assumptions, Methodology, Top 10 Residual Risks, Critical Deficiencies, Phased Remediation Roadmap (0–30 Days, 31–60 Days, 61–90 Days), and Limitations.
-- **Export Capabilities**:
-  - One-click CSV downloads for Risks, Controls, Remediation, and Vendors
-  - Print-friendly layout optimized for browser "Save as PDF" (`window.print()`).
+1. **📊 Executive Dashboard**: Real-time KPI telemetry, appetite violation alerts, risk distributions, and control gap metrics.
+2. **⚠️ Enterprise Risk Register**: 5×5 interactive heat matrix, multi-dimensional impact scoring (financial, operational, reputational, regulatory), and formal risk acceptance workflows.
+3. **🛡️ Control Assessment**: Catalog of controls evaluated across design effectiveness and operating effectiveness with attached evidence verification.
+4. **🎯 NIST CSF 2.0 Maturity**: Interactive radar chart comparing Current vs. Target implementation profiles with gap analysis bar chart across all 6 core functions: `GOVERN`, `IDENTIFY`, `PROTECT`, `DETECT`, `RESPOND`, `RECOVER`.
+5. **⚖️ Regulatory Compliance**: Crosswalk across 5 major standards: NIST CSF 2.0, ISO/IEC 27001:2022, RBI IT Framework, DPDP Act 2023, and PCI DSS 4.0.1.
+6. **🎯 Threat Intelligence**: MITRE ATT&CK technique breakdown mapped directly to internal risks and detection gaps.
+7. **🔧 Remediation Tracker**: Workflow tracking ($Open \rightarrow Assigned \rightarrow In\ Progress \rightarrow Pending\ Verification \rightarrow Closed$) with automated SLA overdue alerts.
+8. **🏢 Vendor Risk Management**: Third-party lifecycle tracking, SOC 2 Type II status, and data sensitivity tiering.
+9. **📜 Security Audit Trail**: Immutable, append-only event log capturing user identity, role, IP address, and before/after JSON state snapshots.
+10. **📄 Consulting Reports & Exports**: Client-ready deliverable format with one-click print/PDF, streaming CSVs, and multi-sheet styled Excel workbook (`.xlsx`) via `openpyxl`.
 
 ---
 
@@ -69,17 +38,13 @@ RiskLens simulates an enterprise GRC (Governance, Risk, and Compliance) advisory
 | Layer | Technology | Key Libraries |
 | :--- | :--- | :--- |
 | **Frontend** | React 18 + TypeScript + Vite | Tailwind CSS, Lucide React, Recharts, Axios |
-| **Backend** | Python 3.11+ / FastAPI | Pydantic v2, SQLAlchemy 2.0, Uvicorn |
-| **Database** | SQLite 3 | Embedded persistent database (`risklens.db`) |
-| **Testing** | Pytest | `pytest-asyncio`, FastAPI `TestClient` |
+| **Backend** | Python 3.11+ / FastAPI | Pydantic v2, SQLAlchemy 2.0, Uvicorn, Jose JWT, bcrypt, openpyxl |
+| **Database** | SQLite 3 (Dev) / PostgreSQL (Prod) | Embedded persistent database (`risklens.db`) with Alembic migration readiness |
+| **Testing** | Pytest 8.3 | `pytest-asyncio`, FastAPI `TestClient` — **62 / 62 Tests Passing** |
 
 ---
 
 ## 📦 Getting Started
-
-### Prerequisites
-- Node.js v18+ and npm
-- Python 3.10+
 
 ### 1. Backend Setup
 ```bash
@@ -116,7 +81,7 @@ Open your browser at: `http://localhost:5173`
 
 ## 🧪 Automated Testing
 
-RiskLens includes a test suite covering risk-scoring algorithms, score-band thresholds, edge cases, database transactions, and API endpoints.
+RiskLens includes a comprehensive 62-test suite covering risk-scoring algorithms, boundary conditions, auth, RBAC permissions, maturity radar data, compliance mappings, and report streaming.
 
 ```bash
 cd backend
@@ -124,41 +89,22 @@ source venv/bin/activate
 python3 -m pytest tests/ -v
 ```
 
-### Test Coverage Highlights:
-- **`tests/test_scoring.py`**:
-  - Inherent risk calculation ($1 \times 1 = 1$, $5 \times 5 = 25$, boundary bounds)
-  - Residual risk calculation with varying control effectiveness percentages ($0\% \to 100\%$)
-  - Score band classification boundaries (Low: 1–4, Medium: 5–9, High: 10–14, Critical: 15–25)
-  - Input validation (rejection of scores outside 1–5 range)
-- **`tests/test_api.py`**:
-  - Health check & CORS headers
-  - Full CRUD lifecycle on Risk Register
-  - Control assessment filtering & updates
-  - Remediation item status transitions & overdue calculation
-  - Vendor risk management endpoints
-  - Full consulting report JSON generation & CSV export streams
-  - Dynamic dashboard metric calculation (verifying no hardcoded values)
+**Result: 62 passed in ~6.9s**
 
 ---
 
-## 🔄 Sample Data Reset / Reseed
+## 📚 Complete Project Documentation
 
-To reset the database back to its default clean synthetic state at any time:
-- Click the **"Reset Demo Data"** button in the top banner of the web application.
-- Or trigger via HTTP POST:
-  ```bash
-  curl -X POST http://localhost:8000/api/admin/reseed
-  ```
-- Or run via Python:
-  ```bash
-  python3 -c "from app.seed import reseed; reseed()"
-  ```
-
----
-
-## ⚖️ Synthetic Data & Educational Disclosure
-
-This project is built purely as a portfolio demonstration of full-stack engineering and cybersecurity GRC consulting concepts.
-- **Apex Financial Services** is an entirely fictional organization.
-- None of the risk findings, control ratings, employee names, or vulnerability descriptions correspond to any real entity or system.
-- Standard framework designations from the **National Institute of Standards and Technology (NIST)** and the **International Organization for Standardization (ISO)** are referenced under fair-use educational principles.
+All formal documentation deliverables are located in the [`docs/`](docs/) directory:
+- [`docs/CODEBASE_AUDIT.md`](docs/CODEBASE_AUDIT.md): Comprehensive initial audit and security analysis
+- [`docs/PROJECT_ARCHITECTURE.md`](docs/PROJECT_ARCHITECTURE.md): Technical architecture specification
+- [`docs/RISK_METHODOLOGY.md`](docs/RISK_METHODOLOGY.md): Mathematical formulas and scoring methodology
+- [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md): Phased delivery tracking (Phases 0–7)
+- [`docs/DATABASE_SCHEMA.md`](docs/DATABASE_SCHEMA.md): Complete ERD and table specifications
+- [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md): REST API reference manual
+- [`docs/SECURITY_DESIGN.md`](docs/SECURITY_DESIGN.md): Threat model, in-memory auth, and RBAC matrix
+- [`docs/FRAMEWORK_MAPPING.md`](docs/FRAMEWORK_MAPPING.md): NIST CSF 2.0, ISO 27001, RBI, DPDP & PCI DSS crosswalk
+- [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md): Docker, PostgreSQL, and cloud hosting guide
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md): End-user and evaluator walkthrough
+- [`docs/INTERVIEW_GUIDE.md`](docs/INTERVIEW_GUIDE.md): Technical talking points for architecture interviews
+- [`docs/TESTING_REPORT.md`](docs/TESTING_REPORT.md): Pytest and Vite build verification report
