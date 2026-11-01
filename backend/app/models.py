@@ -184,6 +184,9 @@ class AuditAction(str, enum.Enum):
     LOGIN = "Login"
     LOGOUT = "Logout"
     RESEED = "Reseed"
+    HARMONIZE_CONTROL_ASSESSMENT = "HARMONIZE_CONTROL_ASSESSMENT"
+    TELEMETRY_CONNECTOR_SYNC = "TELEMETRY_CONNECTOR_SYNC"
+    INGEST_TELEMETRY_WEBHOOK = "INGEST_TELEMETRY_WEBHOOK"
 
 
 # ──────────────────────────────────────────────────────────────────────────────

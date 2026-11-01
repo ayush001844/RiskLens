@@ -39,16 +39,17 @@ app = FastAPI(
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 
 # Configure allowed origins from environment variable (comma-separated)
-_default_origins = "http://localhost:5173,http://localhost:3000,http://localhost:4173"
+_default_origins = "http://localhost:5173,http://localhost:3000,http://localhost:4173,https://risklens-grc.vercel.app"
 _origins_env = os.getenv("ALLOWED_ORIGINS", _default_origins)
 allowed_origins = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
+    allow_headers=["*"],
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────

@@ -61,10 +61,12 @@ export function App() {
     const creds = DEMO_CREDENTIALS[role] || DEMO_CREDENTIALS['Consultant'];
     try {
       const res = await authApi.login(creds.u, creds.p);
-      setAccessToken(res.access_token);
-      setCurrentRole(role);
-      setNotification(`Switched role to ${role} (${res.user.full_name || creds.u})`);
-      setTimeout(() => setNotification(null), 3000);
+      if (res && res.access_token) {
+        setAccessToken(res.access_token);
+        setCurrentRole(role);
+        setNotification(`Switched role to ${role} (${res.user?.full_name || creds.u})`);
+        setTimeout(() => setNotification(null), 3000);
+      }
     } catch (err) {
       console.warn('Auto-login failed (demo mode running without auth constraint):', err);
       setCurrentRole(role);
@@ -75,27 +77,27 @@ export function App() {
     try {
       setLoading(true);
       const [statsData, risksData, controlsData, remData, vendorsData] = await Promise.all([
-        getDashboard(),
-        getRisks(),
-        getControls(),
-        getRemediation(),
-        getVendors(),
+        getDashboard().catch(() => null),
+        getRisks().catch(() => []),
+        getControls().catch(() => []),
+        getRemediation().catch(() => []),
+        getVendors().catch(() => []),
       ]);
-      setStats(statsData);
-      setRisks(risksData);
-      setControls(controlsData);
-      setRemediation(remData);
-      setVendors(vendorsData);
+      if (statsData) setStats(statsData);
+      if (risksData) setRisks(risksData);
+      if (controlsData) setControls(controlsData);
+      if (remData) setRemediation(remData);
+      if (vendorsData) setVendors(vendorsData);
     } catch (err: any) {
       console.error('Failed to load GRC data:', err);
-      setNotification('Backend connection error. Ensure FastAPI backend is running on port 8000.');
+      setNotification('Backend connection error. Reconnecting to telemetry API...');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    authenticateRole('Consultant').then(() => {
+    authenticateRole('Consultant').finally(() => {
       loadAllData();
     });
   }, []);

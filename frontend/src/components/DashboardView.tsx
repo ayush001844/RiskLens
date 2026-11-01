@@ -49,12 +49,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   loading,
   onNavigate,
 }) => {
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-sm text-slate-400">Loading RiskLens Executive Telemetry...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md p-6 rounded-2xl bg-navy-800/90 border border-slate-700/80 shadow-xl">
+          <ShieldAlert className="w-10 h-10 text-amber-400 mx-auto" />
+          <div>
+            <h3 className="text-base font-bold text-slate-100">Connecting to RiskLens Registry</h3>
+            <p className="text-xs text-slate-400 mt-1">Synchronizing live telemetry records for Apex Financial Services...</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
     )
